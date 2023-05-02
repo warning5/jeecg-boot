@@ -1,3 +1,4 @@
+<#include "/common/utils.ftl">
 <#if po.isQuery=='Y'>
 <#assign query_flag=true>
 	<#if query_field_no==2>
@@ -13,7 +14,7 @@
 	</#if>
 	<#if po.queryMode=='single'>
           <#if query_field_no gt 1>  </#if><a-col :lg="8">
-            <#if query_field_no gt 1>  </#if><a-form-item label="${po.filedComment}">
+            <#if query_field_no gt 1>  </#if><a-form-item label="${po.filedComment}" name="${po.fieldName}">
             <#if po.classType=='sel_search'>
               <#if query_field_no gt 1>  </#if><j-search-select placeholder="请选择${po.filedComment}" v-model:value="queryParam.${po.fieldName}" dict="${po.dictTable},${po.dictText},${po.dictField}" />
             <#elseif po.classType=='sel_user'>
@@ -43,7 +44,7 @@
                 <#if query_field_no gt 1>  </#if>code="${po.dictTable}"
                 <#if query_field_no gt 1>  </#if>:fieldConfig="[
                 <#list sourceFields as fieldName>
-                  <#if query_field_no gt 1>  </#if>{ source: '${fieldName}', target: '${targetFields[fieldName_index]}' },
+                  <#if query_field_no gt 1>  </#if>{ source: '${fieldName}', target: '${dashedToCamel(targetFields[fieldName_index])}' },
                 </#list>
                 <#if query_field_no gt 1>  </#if>]"
                 <#if query_field_no gt 1>  </#if>:multi="${po.extendParams.popupMulti?c}"

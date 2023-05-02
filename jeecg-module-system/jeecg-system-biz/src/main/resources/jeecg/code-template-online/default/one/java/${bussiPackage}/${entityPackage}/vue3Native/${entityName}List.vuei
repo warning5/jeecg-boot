@@ -21,7 +21,7 @@
 <#assign query_flag = false>
     <!--查询区域-->
     <div class="jeecg-basic-table-form-container">
-      <a-form @keyup.enter.native="searchQuery" :model="queryParam" :label-col="labelCol" :wrapper-col="wrapperCol">
+      <a-form ref="formRef" @keyup.enter.native="searchQuery" :model="queryParam" :label-col="labelCol" :wrapper-col="wrapperCol">
         <a-row :gutter="24">
 <#-- 开始循环 -->
 <#list columns as po>
@@ -141,8 +141,12 @@
 <#if need_pca>
   import { getAreaTextByCode } from '/@/components/Form/src/utils/Area';
 </#if>
+  <#if bpm_flag==true>
+  import { startProcess } from '/@/api/common/api';
+  </#if>
 
-  const queryParam = ref<any>({});
+  const formRef = ref();
+  const queryParam = reactive<any>({});
   const toggleSearchStatus = ref<boolean>(false);
   const registerModal = ref();
   //注册table数据
@@ -158,12 +162,13 @@
         fixed: 'right',
       },
       beforeFetch: (params) => {
-        return Object.assign(params, queryParam.value);
+        return Object.assign(params, queryParam);
       },
     },
     exportConfig: {
       name: "${tableVo.ftlDescription}",
       url: getExportUrl,
+      params: queryParam,
     },
 	  importConfig: {
 	    url: getImportUrl,
@@ -241,19 +246,43 @@
    * 下拉操作栏
    */
   function getDropDownAction(record) {
-    return [
+    <#if bpm_flag==true>
+    let dropDownAction = [
       {
         label: '详情',
         onClick: handleDetail.bind(null, record),
-      },
-      {
+      }, {
         label: '删除',
         popConfirm: {
           title: '是否确认删除',
           confirm: handleDelete.bind(null, record),
-        },
-      },
+        }
+      }
     ];
+    if(record.bpmStatus == '1'){
+      dropDownAction.push({
+        label: '发起流程',
+        popConfirm: {
+          title: '确认提交流程吗？',
+          confirm: handleProcess.bind(null, record),
+        }
+      })
+    }
+    return dropDownAction;
+    <#else>
+    return [
+      {
+        label: '详情',
+        onClick: handleDetail.bind(null, record),
+      }, {
+        label: '删除',
+        popConfirm: {
+          title: '是否确认删除',
+          confirm: handleDelete.bind(null, record),
+        }
+      }
+    ]
+    </#if>
   }
 
   /**
@@ -267,7 +296,7 @@
    * 重置
    */
   function searchReset() {
-    queryParam.value = {};
+    formRef.value.resetFields();
     selectedRowKeys.value = [];
     //刷新数据
     reload();
@@ -279,7 +308,7 @@
    */
   function setFieldsValue(map) {
     Object.keys(map).map((key) => {
-      queryParam.value[key] = map[key];
+      queryParam[key] = map[key];
     });
   }
   </#if>
@@ -291,7 +320,23 @@
    * @param value
    */
   function handleAreaChange(key, value) {
-    queryParam.value[key] = value.join(',');
+    queryParam[key] = value.join(',');
+  }
+  </#if>
+
+  <#if bpm_flag==true>
+  /**
+   * 提交流程
+   */
+  async function handleProcess(record) {
+    let params = {
+      flowCode: 'dev_${tableName}_001',
+      id: record.id,
+      formUrl: '${entityPackage}/components/${entityName}Form',
+      formUrlMobile: ''
+    }
+    await startProcess(params);
+    handleSuccess();
   }
   </#if>
 
@@ -301,7 +346,7 @@
    * @param value
    */
   function handleFormChange(key, value) {
-    queryParam.value[key] = value;
+    queryParam[key] = value;
   }
   
   /**
